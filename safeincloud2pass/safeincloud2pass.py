@@ -58,6 +58,7 @@ class Card(object):
 
     def load_from_xml_node(self, node):
         """Populate from xml.etree <card> data."""
+        self.id = node.attrib.get('id')
         self.title = node.attrib.get('title')
         self.symbol = node.attrib.get('symbol')
         self._template = node.attrib.get('template', False)
@@ -86,7 +87,7 @@ class Card(object):
         There is no attribute to denote a card as a sample, however
         SafeInCloud default sample cards have (Sample) in their title.
         """
-        if '(Sample)' in self.title:
+        if self.title != None and '(Sample)' in self.title:
             return
 
     def __str__(self):
@@ -100,7 +101,7 @@ class Card(object):
         primary_password = None
         for field in self.fields:
             if field.type_ == 'password':
-                result += field.value + '\n'
+                result += "Password: " + field.value + '\n'
                 primary_password = field.value
                 break
         for field in self.fields:
@@ -183,7 +184,12 @@ def get_cards(xmlroot):
     card_nodes = [card for card in xmlroot.iter('card')]
     all_cards = []
     for node in card_nodes:
-        fields = [Field(f_node) for f_node in node.iter('field')]
+        fields = []
+        for f_node in node.iter('field'):
+            field = Field(f_node)
+            if field.value != None:
+                fields.append(field)
+
         card = Card(node, fields)
         all_cards.append(card)
 
@@ -220,6 +226,8 @@ def main(args):
                         help='Include templates')
     parser.add_argument('--deleted', action='store_true',
                         help='Include deleted cards')
+    parser.add_argument('--dryrun', action='store_true', default=False,
+                        help='Do not insert to pass')
     args = parser.parse_args()
 
     print('Loading XML file...')
@@ -230,6 +238,8 @@ def main(args):
     all_labels = get_labels(xmlroot)
 
     for card in all_cards:
+
+        print(f'Processing Card: {card.id}: {card.title}')
 
         if card.sample and not args.samples:
             print('Skipping card (sample): {}'.format(card.title))
@@ -243,6 +253,10 @@ def main(args):
             print('Skipping card (deleted): {}'.format(card.title))
             continue
 
+        if card.title == None:
+            print(f'Skipping card (title == None): {card.id}')
+            continue
+
         path = make_path_safe(card.title)
         for label in all_labels:
             if label.id == card.label_id:
@@ -250,11 +264,14 @@ def main(args):
 
         print('Importing card: {}'.format(path))
 
-        pass_import_entry(path, str(card))
+        if args.dryrun:
+            print("\n(dryrun)\n" + path + "\n" + str(card))
+        else:
+            pass_import_entry(path, str(card))
 
         print('OK.')
 
 
 if __name__ == '__main__':
     import sys
-    sys.exit(main(sys.argv))
+    main(sys.argv)
