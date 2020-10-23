@@ -1,5 +1,7 @@
 # safeincloud2pass.py: Import a SafeInCloud XML export file to pass.
 
+**This is a fork from https://github.com/gkmcd/safeincloud2pass to fix several 'None'-Values that are occurs in my personal password database**
+
 ## Introduction
 This is a simple script that allows you to import your SafeInCloud Password
 Manager data into Pass, *"the standard unix password manager."*
