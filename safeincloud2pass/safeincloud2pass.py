@@ -101,7 +101,7 @@ class Card(object):
         primary_password = None
         for field in self.fields:
             if field.type_ == 'password':
-                result += "Password: " + field.value + '\n'
+                result += field.value + '\n'
                 primary_password = field.value
                 break
         for field in self.fields:
